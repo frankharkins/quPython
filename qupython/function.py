@@ -1,4 +1,5 @@
 import qiskit
+from qiskit_aer.primitives import Sampler
 from .qubit import QubitPromise, quPythonInstruction, quPythonMeasurement
 from .construction import _get_promises, _construct_circuit
 
@@ -8,7 +9,7 @@ class quPythonFunction:
 
     def __call__(self, *args, **kwargs):
         self.compile(*args, **kwargs)
-        return output
+        return self.run()
 
     def compile(self, *args, **kwargs):
         """
@@ -21,5 +22,10 @@ class quPythonFunction:
 
     def run(self):
         self.sampler_result = Sampler().run(self.circuit).result()
-        _set_promise_values(self.sampler_result, self.promises)
+        return self.interpret_result(self.sampler_result)
+
+    def interpret_result(self, result):
+        integer = [*result.quasi_dists[0]][0]  # get key from dict
+        for i, promise in enumerate(self.promises[::-1]):
+            promise.value = bool((1 << i) & integer)
         return self.output

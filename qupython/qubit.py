@@ -13,6 +13,14 @@ class QubitPromise:
             raise QubitPromiseNotResolvedError("This qubit promise has not been resolved yet.")
         return self.value
 
+    def __eq__(self, other):
+        if self.value is None:
+            return id(self) == id(other)
+        return self.value == other
+
+    def __hash__(self):
+        return id(self)
+
     def __repr__(self):
         if self.value is None:
             return f"QubitPromise({self.measurement_instruction})"
@@ -36,6 +44,10 @@ class Qubit:
         self.operations = []
 
         self._create_1q_gate_methods()
+
+    def __bool__(self):
+        raise ValueError("Qubit can't be cast to Python bool; to measure this"
+                         " Qubit, use `.measure()`")
 
     def _separate_conditions(self, conditions):
         # TODO: unit test
