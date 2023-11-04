@@ -26,6 +26,6 @@ class quPythonFunction:
 
     def interpret_result(self, result):
         integer = [*result.quasi_dists[0]][0]  # get key from dict
-        for i, promise in enumerate(self.promises[::-1]):
-            promise.value = bool((1 << i) & integer)
+        for promise in self.promises:
+            promise.value = bool((1 << promise.index) & integer)
         return self.output

@@ -42,3 +42,14 @@ class Compilation(unittest.TestCase):
                     len(qc.data),
                     n + 3*(n//2)
             )
+
+class QuantumFunctionCallable(unittest.TestCase):
+    def test_ordering(self):
+        @quantum
+        def get_bits():
+            qubits = [ Qubit() for _ in range(10) ]
+            qubits[0].x()
+            return [ qubit.measure() for qubit in qubits ]
+
+        for _ in range(20):
+            self.assertEqual(get_bits()[0], True)
