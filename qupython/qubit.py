@@ -1,16 +1,47 @@
 import qiskit.circuit.library as clib
+from .err_msg import ERR_MSG
 
 class QubitPromiseNotResolvedError(Exception):
     pass
 
 class QubitPromise:
+    """
+    Placeholder for qubit measurement results.
+
+    Each promise belongs to exactly one measurement instruction. At the end of
+    a `@quantum` function, quPython executes the circuit needed to fulfil any
+    returned promises.
+
+    After the values are determined, a `QubitPromise` tries to behave as much
+    like a `bool` as possible. Unfortunately, there are some quirks because
+    `QubitPromises` need to have unique hashes before circuit compilation, but
+    `bool`s all have the same hash (0 or 1) and you can't change an object's
+    hash without breaking basic Python functionality. The following code
+    snippet shows an example.
+
+    ```
+    # Create fulfilled qubit promise
+    promise = QubitPromise(None)
+    promise.value = True
+
+    # Show unexpected behavior
+    promise == True  # True
+    promise in (True, False)  # False
+    ```
+
+    Currently not sure what the best behavior is. Options are:
+      * Keep it like this, and encourage users to cast to `bool` ASAP
+      * Keep like this, but have quPython return a new copy of the data with
+        _actual_ `bool`s
+      * Something else?
+    """
     def __init__(self, measurement_instruction):
         self.measurement_instruction = measurement_instruction
         self.value = None
 
     def __bool__(self):
         if self.value is None:
-            raise QubitPromiseNotResolvedError("This qubit promise has not been resolved yet.")
+            raise QubitPromiseNotResolvedError(ERR_MSG["QubitPromiseNotResolved"])
         return self.value
 
     def __eq__(self, other):
@@ -46,11 +77,10 @@ class Qubit:
         self._create_1q_gate_methods()
 
     def __bool__(self):
-        raise ValueError("Qubit can't be cast to Python bool; to measure this"
-                         " Qubit, use `.measure()`")
+        raise ValueError("Can't cast Qubit to bool; use `.measure()` to measure"
+                         " the qubit instead.")
 
     def _separate_conditions(self, conditions):
-        # TODO: unit test
         qubits = [ c for c in conditions if isinstance(c, Qubit) ]
         promises = [ c for c in conditions if isinstance(c, QubitPromise) ]
         rest = [ c for c in conditions if not isinstance(c, (Qubit, QubitPromise)) ]
@@ -59,6 +89,7 @@ class Qubit:
     def _create_1q_gate_methods(self):
         """
         Generate methods such as self.h, self.p, etc.
+        This method runs on object initialization.
         """
         # TODO: unit test
         # TODO: neaten up
@@ -80,6 +111,7 @@ class Qubit:
                 for qubit in qubits+[self]:
                     qubit.operations.append(inst)
             return add_gate
+
         for gate, name in [
             (clib.XGate, "x"),
             (clib.YGate, "y"),
@@ -98,7 +130,9 @@ class Qubit:
             setattr(self, name, _create_method(gate))
 
     def measure(self):
-        # TODO: unit test
+        """
+        Add measure instruction to Qubit and return QubitPromise
+        """
         inst = quPythonMeasurement(self)
         self.operations.append(inst)
         return inst.promise

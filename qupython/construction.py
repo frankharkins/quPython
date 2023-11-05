@@ -1,6 +1,9 @@
+# Functions for compiling quantum circuits from QubitPromise objects
+
 import qiskit
 from collections.abc import Mapping, Iterable
 from .qubit import Qubit, QubitPromise, quPythonInstruction, quPythonMeasurement
+from .err_msg import ERR_MSG
 
 def _get_promises(obj):
     """
@@ -14,8 +17,7 @@ def _get_promises(obj):
         return set()
 
     if isinstance(obj, Qubit):
-        raise ValueError("Can't return a Qubit from a @quantum function; did"
-                         " you mean to return Qubit.measure()?")
+        raise ValueError(ERR_MSG["ReturnQubitFromQuantumFunction"])
     if isinstance(obj, QubitPromise):
         return set([obj])
 
@@ -35,9 +37,13 @@ def _get_promises(obj):
             promises |= _get_promises(element)
         return promises
 
-    raise ValueError(f"Can't search through object {obj} for QubitPromises")
+    raise ValueError(ERR_MSG["CantSearchObjectForPromises"].format(obj=type(obj)))
 
 def _get_qubits_from_promises(promises):
+    """
+    Find all qubits needed to fulfil all promises. This includes any qubits
+    that interact with measured qubits.
+    """
     # TODO: unit test
     promise_qubits = [promise.measurement_instruction.qubit for promise in promises]
     all_qubits = set(promise_qubits)
@@ -46,6 +52,9 @@ def _get_qubits_from_promises(promises):
     return all_qubits
 
 def _waiting_for_qubits(instruction):
+    """
+    Check if instruction can be applied to circuit.
+    """
     if isinstance(instruction, quPythonMeasurement):
         return False
     for qubit in instruction.qubits:
@@ -54,6 +63,10 @@ def _waiting_for_qubits(instruction):
     return False
 
 def _add_instructions_to_circuit(circuit, qubit):
+    """
+    Keep adding this Qubit's instructions to the circuit until complete, or
+    waiting for another qubit.
+    """
     for op in qubit.operations[qubit.op_pointer:]:
         if _waiting_for_qubits(op):
             return
@@ -69,6 +82,9 @@ def _add_instructions_to_circuit(circuit, qubit):
             q.op_pointer += 1
 
 def _construct_circuit(promises):
+    """
+    Compile quantum circuit needed to fulfil QubitPromise values.
+    """
     # TODO: unit test
     qubits = _get_qubits_from_promises(promises)
     for index, qubit in enumerate(qubits):

@@ -36,7 +36,7 @@ Get a feel for quPython with code examples for popular quantum circuits.
 
 ```python
 @quantum
-def ghz(num_bits: int) -> list[bool]:
+def ghz(num_bits: int):
     """
     Create and measure a GHZ state
     """
@@ -44,66 +44,40 @@ def ghz(num_bits: int) -> list[bool]:
     control, targets = qubits[0], qubits[1:]
     control.h()
     for target in targets:
-        if control:  # quantum control
-            target.x()
+        target.x(conditions=[control])
     return [ qubit.measure() for qubit in qubits ]
 ```
 
 ```python
-@quantum.subroutine
-def teleporation(message: Qubit) -> Qubit:
-    # Make Bell state
-    bell_pair = {
-        "alice": Qubit(),
-        "bob": Qubit()
-    }
-    if bell_pair["alice"].h():
-        bell_pair["bob"].x()
+import math
 
-    # Entangle with message
-    if message:
-        bell_pair["alice"].x()
-    message.h()
-
-    # Measure qubits
-    do_x, do_z = message.measure(), bell_pair["alice"].measure()
-
-    # Condition gates on classical bits
-    if do_x:
-        bell_pair["bob"].x()
-    if do_y:
-        bell_pair["bob"].y()
-
-    return bell_pair["bob"]
-```
-
-```python
-@quantum.subroutine
-def qft(qubits: list[Qubit]) -> list[Qubit]:
-    """
-    Rotate qubits and return them in correct order
-    """
+@quantum
+def qft(num_qubits: int):
+    qubits = [ Qubit() for _ in range(num_qubits) ]
     def rotate(qubits):
         """One iteration of the QFT rotations"""
         qubits[0].h()
         for index, control in enumerate(qubits[1:]):
-            if control:
-                power = index + 1
-                qubits[0].p(math.pi/2**power)
+            power = index + 1
+            qubits[0].p(
+                math.pi/2**power,
+                conditions=[control]
+            )
 
     for index in range(len(qubits)):
-        rotate(qubits[i:])
-    return qubits[::-1]
+        rotate(qubits[index:])
+    return [q.measure() for q in qubits[::-1]]
 ```
 
 ### Generate Qiskit circuits
 
 If you want, you can just use quPython to create Qiskit circuits with Pythonic
-syntax (rather than the assembly-like syntax of `qc.cx(0, 1)` in native Qiskit.
+syntax (rather than the assembly-like syntax of `qc.cx(0, 1)` in native
+Qiskit).
 
 ```python
 # Compile using quPython
-random_bit.compile_circuit()
+random_bit.compile()
 
 # Execute using Qiskit
 qiskit_circuit = random_bit.circuit
@@ -129,8 +103,8 @@ function. `Qubit` objects store a list of operations that act on them.
 ```python
 >>> qubit = Qubit()
 >>> qubit.h()
->>> qubit.data
-['h']
+>>> qubit.operations
+[quPythonInstruction(h, [<qupython.qubit.Qubit object at 0x7fddf68504d0>])]
 ```
 
 The only way to get a classical data type from a quantum program is the
@@ -141,7 +115,7 @@ operation that created it.
 ```python
 >>> promise = qubit.measure()
 >>> promise
-QubitPromise(value=None, qubit=<quPython.qubit at 0x29186136>)
+QubitPromise(<qupython.qubit.quPythonMeasurement object at 0x7fddf0ddbbd0>)
 ```
 
 When the user calls a `@quantum` function, quPython intercepts the output,
