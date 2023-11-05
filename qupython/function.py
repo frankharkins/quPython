@@ -21,10 +21,16 @@ class quPythonFunction:
         self.circuit = _construct_circuit(self.promises)
 
     def run(self):
+        if self.promises == []:
+            return self.output
         self.sampler_result = Sampler().run(self.circuit).result()
         return self.interpret_result(self.sampler_result)
 
     def interpret_result(self, result):
+        if result is None and self.promises == []:
+            # TODO: decide whether to warn / raise
+            return self.output
+
         integer = [*result.quasi_dists[0]][0]  # get key from dict
         for promise in self.promises:
             promise.value = bool((1 << promise.index) & integer)

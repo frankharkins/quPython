@@ -78,3 +78,10 @@ class QuantumFunctionCallable(unittest.TestCase):
             return output
         output = get_data()
         self.assertEqual(output.data[2]["bit2"], False)
+
+    def test_return_none(self):
+        @quantum
+        def get_none():
+            qubit = Qubit()
+            return None
+        self.assertIsNone(get_none())
