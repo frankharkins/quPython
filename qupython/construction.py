@@ -19,12 +19,6 @@ def _get_promises(obj):
     if isinstance(obj, QubitPromise):
         return set([obj])
 
-    if isinstance(obj, Iterable):
-        promises = set()
-        for element in obj:
-            promises |= _get_promises(element)
-        return promises
-
     if hasattr(obj, "__dict__"):
         obj = obj.__dict__
 
@@ -33,6 +27,12 @@ def _get_promises(obj):
         for key, value in obj.items():
             promises |= _get_promises(key)
             promises |= _get_promises(value)
+        return promises
+
+    if isinstance(obj, Iterable):
+        promises = set()
+        for element in obj:
+            promises |= _get_promises(element)
         return promises
 
     raise ValueError(f"Can't search through object {obj} for QubitPromises")

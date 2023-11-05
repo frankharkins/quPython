@@ -53,3 +53,28 @@ class QuantumFunctionCallable(unittest.TestCase):
 
         for _ in range(20):
             self.assertEqual(get_bits()[0], True)
+
+    def test_return_dict(self):
+        @quantum
+        def get_bit_dict():
+            return { "bit": Qubit().measure() }
+
+        output = get_bit_dict()
+        self.assertIn("bit", output)
+        self.assertEqual(output["bit"], False)
+
+    def test_return_complex_data_structure(self):
+        class CustomClass:
+            def __init__(self, data):
+                self.data = data
+
+        @quantum
+        def get_data():
+            qubit = Qubit()
+            output = CustomClass([
+                { f"bit{i}": Qubit().measure() for i in range(3) }
+                for _ in range(4)
+            ])
+            return output
+        output = get_data()
+        self.assertEqual(output.data[2]["bit2"], False)
