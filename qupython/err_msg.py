@@ -1,4 +1,5 @@
 # Experimental extra-long error messages
+# fmt: off
 
 from textwrap import dedent
 

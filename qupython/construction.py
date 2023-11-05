@@ -5,6 +5,7 @@ from collections.abc import Mapping, Iterable
 from .qubit import Qubit, QubitPromise, quPythonInstruction, quPythonMeasurement
 from .err_msg import ERR_MSG
 
+
 def _get_promises(obj):
     """
     Recursively search Python object for `QubitPromises`.
@@ -39,6 +40,7 @@ def _get_promises(obj):
 
     raise ValueError(ERR_MSG["CantSearchObjectForPromises"].format(obj=type(obj)))
 
+
 def _get_qubits_from_promises(promises):
     """
     Find all qubits needed to fulfil all promises. This includes any qubits
@@ -51,6 +53,7 @@ def _get_qubits_from_promises(promises):
         all_qubits |= qubit.get_linked_qubits()
     return all_qubits
 
+
 def _waiting_for_qubits(instruction):
     """
     Check if instruction can be applied to circuit.
@@ -62,24 +65,23 @@ def _waiting_for_qubits(instruction):
             return True
     return False
 
+
 def _add_instructions_to_circuit(circuit, qubit):
     """
     Keep adding this Qubit's instructions to the circuit until complete, or
     waiting for another qubit.
     """
-    for op in qubit.operations[qubit.op_pointer:]:
+    for op in qubit.operations[qubit.op_pointer :]:
         if _waiting_for_qubits(op):
             return
         if isinstance(op, quPythonMeasurement):
             qubit.op_pointer += 1
             circuit.measure(qubit.index, op.promise.index)
             continue
-        circuit.append(
-            op.qiskit_instruction,
-            [q.index for q in op.qubits]
-        )
+        circuit.append(op.qiskit_instruction, [q.index for q in op.qubits])
         for q in op.qubits:
             q.op_pointer += 1
+
 
 def _construct_circuit(promises):
     """
@@ -88,8 +90,8 @@ def _construct_circuit(promises):
     # TODO: unit test
     qubits = _get_qubits_from_promises(promises)
     for index, qubit in enumerate(qubits):
-        qubit.index = index    # Map qupython.Qubit to circuit qubit
-        qubit.op_pointer = 0   # To keep track of compiled operations
+        qubit.index = index  # Map qupython.Qubit to circuit qubit
+        qubit.op_pointer = 0  # To keep track of compiled operations
     for index, promise in enumerate(promises):
         promise.index = index  # Map promise to circuit clbit
 

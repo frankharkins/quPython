@@ -1,8 +1,10 @@
 import qiskit.circuit.library as clib
 from .err_msg import ERR_MSG
 
+
 class QubitPromiseNotResolvedError(Exception):
     pass
+
 
 class QubitPromise:
     """
@@ -35,6 +37,7 @@ class QubitPromise:
         _actual_ `bool`s
       * Something else?
     """
+
     def __init__(self, measurement_instruction):
         self.measurement_instruction = measurement_instruction
         self.value = None
@@ -57,17 +60,21 @@ class QubitPromise:
             return f"QubitPromise({self.measurement_instruction})"
         return repr(self.value)
 
+
 class quPythonInstruction:
     def __init__(self, qiskit_instruction, qubits):
         self.qiskit_instruction = qiskit_instruction
         self.qubits = qubits
+
     def __repr__(self):
         return f"quPythonInstruction({self.qiskit_instruction.name}, {self.qubits})"
 
-class quPythonMeasurement():
+
+class quPythonMeasurement:
     def __init__(self, qubit):
         self.promise = QubitPromise(self)
         self.qubit = qubit
+
 
 class Qubit:
     def __init__(self, name=None):
@@ -77,13 +84,15 @@ class Qubit:
         self._create_1q_gate_methods()
 
     def __bool__(self):
-        raise ValueError("Can't cast Qubit to bool; use `.measure()` to measure"
-                         " the qubit instead.")
+        raise ValueError(
+            "Can't cast Qubit to bool; use `.measure()` to measure"
+            " the qubit instead."
+        )
 
     def _separate_conditions(self, conditions):
-        qubits = [ c for c in conditions if isinstance(c, Qubit) ]
-        promises = [ c for c in conditions if isinstance(c, QubitPromise) ]
-        rest = [ c for c in conditions if not isinstance(c, (Qubit, QubitPromise)) ]
+        qubits = [c for c in conditions if isinstance(c, Qubit)]
+        promises = [c for c in conditions if isinstance(c, QubitPromise)]
+        rest = [c for c in conditions if not isinstance(c, (Qubit, QubitPromise))]
         return qubits, promises, rest
 
     def _create_1q_gate_methods(self):
@@ -91,25 +100,28 @@ class Qubit:
         Generate methods such as self.h, self.p, etc.
         This method runs on object initialization.
         """
+
         # TODO: unit test
         # TODO: neaten up
         def _create_method(gate):
             def add_gate(*args, **kwargs):
                 conditions = kwargs.pop("conditions", [])
-                qubits, promises, rest = self._separate_conditions(conditions) 
+                qubits, promises, rest = self._separate_conditions(conditions)
                 if not all(rest):
                     return
                 if promises:
-                    raise NotImplementedError("Can't condition on a qubit measurement yet.")
+                    raise NotImplementedError(
+                        "Can't condition on a qubit measurement yet."
+                    )
                 qiskit_inst = gate(*args, **kwargs)
                 if qubits:
                     qiskit_inst = qiskit_inst.control(len(qubits))
                 inst = quPythonInstruction(
-                           qiskit_instruction=qiskit_inst,
-                           qubits=qubits+[self]
+                    qiskit_instruction=qiskit_inst, qubits=qubits + [self]
                 )
-                for qubit in qubits+[self]:
+                for qubit in qubits + [self]:
                     qubit.operations.append(inst)
+
             return add_gate
 
         for gate, name in [
@@ -126,7 +138,7 @@ class Qubit:
             (clib.RYGate, "ry"),
             (clib.RZGate, "rz"),
             (clib.UGate, "u"),
-            ]:
+        ]:
             setattr(self, name, _create_method(gate))
 
     def measure(self):
@@ -156,5 +168,3 @@ class Qubit:
             new_qubits = new_qubits - linked_qubits
             linked_qubits |= new_qubits
         return linked_qubits
-
-

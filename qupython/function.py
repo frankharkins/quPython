@@ -6,8 +6,10 @@ from .qubit import QubitPromise, quPythonInstruction, quPythonMeasurement
 from .construction import _get_promises, _construct_circuit
 from .err_msg import ERR_MSG
 
+
 class quPythonFunctionError(Exception):
     pass
+
 
 class quPythonFunction:
     """
@@ -15,6 +17,7 @@ class quPythonFunction:
     cirucit. Calling this object runs the function, executes the circuit, and
     inserts the results into your returned object.
     """
+
     def __init__(self, function):
         self.function = function
         self.circuit = None
@@ -23,7 +26,7 @@ class quPythonFunction:
     def __call__(self, *args, **kwargs):
         """
         Run the function, compile the circuit, execute the circuit, and return
-        the results. 
+        the results.
         """
         self.compile(*args, **kwargs)
         return self.run()
