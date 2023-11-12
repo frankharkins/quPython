@@ -1,5 +1,6 @@
 # Functions for compiling quantum circuits from QubitPromise objects
 
+import contextlib
 import qiskit
 from collections.abc import Mapping, Iterable
 from .qubit import Qubit, QubitPromise, quPythonInstruction, quPythonMeasurement
@@ -41,27 +42,24 @@ def _get_promises(obj):
     raise ValueError(ERR_MSG["CantSearchObjectForPromises"].format(obj=type(obj)))
 
 
-def _get_qubits_from_promises(promises):
+def _get_bits_from_promises(promises):
     """
     Find all qubits needed to fulfil all promises. This includes any qubits
     that interact with measured qubits.
     """
-    # TODO: unit test
-    promise_qubits = [promise.measurement_instruction.qubit for promise in promises]
-    all_qubits = set(promise_qubits)
-    for qubit in promise_qubits:
-        all_qubits |= qubit.get_linked_qubits()
-    return all_qubits
+    initial_bits=set(promises)
+    all_bits = initial_bits.copy()
+    for bit in initial_bits:
+        all_bits |= bit.get_linked_bits(already_found=all_bits)
+    return all_bits
 
 
-def _waiting_for_qubits(instruction):
+def _waiting_for_bits(instruction):
     """
     Check if instruction can be applied to circuit.
     """
-    if isinstance(instruction, quPythonMeasurement):
-        return False
-    for qubit in instruction.qubits:
-        if qubit.operations.index(instruction) != qubit.op_pointer:
+    for bit in instruction.qubits+instruction.promises:
+        if bit.operations.index(instruction) != bit.op_pointer:
             return True
     return False
 
@@ -69,18 +67,30 @@ def _waiting_for_qubits(instruction):
 def _add_instructions_to_circuit(circuit, qubit):
     """
     Keep adding this Qubit's instructions to the circuit until complete, or
-    waiting for another qubit.
+    waiting for another bit or qubit.
     """
     for op in qubit.operations[qubit.op_pointer :]:
-        if _waiting_for_qubits(op):
+        if _waiting_for_bits(op):
             return
         if isinstance(op, quPythonMeasurement):
             qubit.op_pointer += 1
-            circuit.measure(qubit.index, op.promise.index)
+            for promise in op.promises:
+                circuit.measure(qubit.index, promise.index)
+                promise.op_pointer += 1
             continue
-        circuit.append(op.qiskit_instruction, [q.index for q in op.qubits])
-        for q in op.qubits:
-            q.op_pointer += 1
+        if op.promises:
+            # TODO: neaten up
+            with contextlib.ExitStack() as stack:
+                for promise in op.promises:
+                    stack.enter_context(
+                        circuit.if_test((promise.index, int(not promise.inverse)))
+                    )
+                circuit.append(op.qiskit_instruction, [q.index for q in op.qubits])
+
+        else:
+            circuit.append(op.qiskit_instruction, [q.index for q in op.qubits])
+        for bit in op.qubits+op.promises:
+            bit.op_pointer += 1
 
 
 def _construct_circuit(promises):
@@ -88,12 +98,15 @@ def _construct_circuit(promises):
     Compile quantum circuit needed to fulfil QubitPromise values.
     """
     # TODO: unit test
-    qubits = _get_qubits_from_promises(promises)
+    bits = _get_bits_from_promises(promises)
+    qubits = [b for b in bits if isinstance(b, Qubit)]
+    promises = [p for p in bits if isinstance(p, QubitPromise)]
     for index, qubit in enumerate(qubits):
         qubit.index = index  # Map qupython.Qubit to circuit qubit
         qubit.op_pointer = 0  # To keep track of compiled operations
     for index, promise in enumerate(promises):
         promise.index = index  # Map promise to circuit clbit
+        promise.op_pointer = 0
 
     circuit = qiskit.QuantumCircuit(len(qubits), len(promises))
     while any(q.op_pointer < len(q.operations) for q in qubits):

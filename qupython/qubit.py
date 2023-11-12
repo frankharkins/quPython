@@ -5,8 +5,27 @@ from .err_msg import ERR_MSG
 class QubitPromiseNotResolvedError(Exception):
     pass
 
+class _Bit:
+    operations: list
 
-class QubitPromise:
+    def get_linked_bits(self, already_found=set()):
+        # TODO: unit test
+        # TODO: neaten up
+        linked_bits = already_found.copy() or set([self])
+        for op in self.operations:
+            linked_bits |= set(op.qubits)
+            linked_bits |= set(op.promises)
+
+        new_bits = linked_bits - already_found
+        while new_bits:
+            for bit in new_bits.copy():
+                new_bits |= bit.get_linked_bits(already_found=linked_bits)
+            new_bits = new_bits - linked_bits
+            linked_bits |= new_bits
+        return linked_bits
+
+
+class QubitPromise(_Bit):
     """
     Placeholder for qubit measurement results.
 
@@ -38,8 +57,9 @@ class QubitPromise:
       * Something else?
     """
 
-    def __init__(self, measurement_instruction):
-        self.measurement_instruction = measurement_instruction
+    def __init__(self, measurement_instruction, inverse=False):
+        self.operations = [measurement_instruction]
+        self.inverse = inverse
         self.value = None
 
     def __bool__(self):
@@ -57,14 +77,24 @@ class QubitPromise:
 
     def __repr__(self):
         if self.value is None:
-            return f"QubitPromise({self.measurement_instruction})"
+            return f"QubitPromise({self.operations})"
         return repr(self.value)
+
+    def __invert__(self):
+        new_promise = QubitPromise(
+            self.measurement_instruction,
+            inverse= not self.inverse
+        )
+        self.measurement_instruction.append(new_promise)
+        return new_promise
+
 
 
 class quPythonInstruction:
-    def __init__(self, qiskit_instruction, qubits):
+    def __init__(self, qiskit_instruction, qubits, promises=[]):
         self.qiskit_instruction = qiskit_instruction
         self.qubits = qubits
+        self.promises = promises
 
     def __repr__(self):
         return f"quPythonInstruction({self.qiskit_instruction.name}, {self.qubits})"
@@ -72,11 +102,11 @@ class quPythonInstruction:
 
 class quPythonMeasurement:
     def __init__(self, qubit):
-        self.promise = QubitPromise(self)
-        self.qubit = qubit
+        self.promises = [QubitPromise(self)]
+        self.qubits = [qubit]
 
 
-class Qubit:
+class Qubit(_Bit):
     def __init__(self, name=None):
         self.name = name
         self.operations = []
@@ -109,18 +139,18 @@ class Qubit:
                 qubits, promises, rest = self._separate_conditions(conditions)
                 if not all(rest):
                     return
-                if promises:
-                    raise NotImplementedError(
-                        "Can't condition on a qubit measurement yet."
-                    )
                 qiskit_inst = gate(*args, **kwargs)
                 if qubits:
                     qiskit_inst = qiskit_inst.control(len(qubits))
                 inst = quPythonInstruction(
-                    qiskit_instruction=qiskit_inst, qubits=qubits + [self]
+                    qiskit_instruction=qiskit_inst,
+                    qubits=qubits + [self],
+                    promises=promises
                 )
                 for qubit in qubits + [self]:
                     qubit.operations.append(inst)
+                for promise in promises:
+                    promise.operations.append(inst)
                 return self
 
             return add_gate
@@ -148,24 +178,4 @@ class Qubit:
         """
         inst = quPythonMeasurement(self)
         self.operations.append(inst)
-        return inst.promise
-
-    def get_linked_qubits(self, already_found=set()):
-        # TODO: unit test
-        # TODO: neaten up
-        # TODO: optimize
-        linked_qubits = already_found.copy() or set([self])
-        for op in self.operations:
-            if isinstance(op, quPythonMeasurement):
-                continue
-            linked_qubits |= set(op.qubits)
-        if linked_qubits == already_found:
-            return linked_qubits
-
-        new_qubits = linked_qubits.copy()
-        while new_qubits:
-            for qubit in linked_qubits:
-                new_qubits |= qubit.get_linked_qubits(already_found=linked_qubits)
-            new_qubits = new_qubits - linked_qubits
-            linked_qubits |= new_qubits
-        return linked_qubits
+        return inst.promises[0]
