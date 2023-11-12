@@ -2,6 +2,10 @@
 
 > Quantum programs directly in Python 
 
+```
+pip install qupython
+```
+
 > [!WARNING]  
 > This project is currently a proof-of-concept. It will be buggy and unstable.
 

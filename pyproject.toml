@@ -1,0 +1,22 @@
+[project]
+name = "qupython"
+version = "0.0.1"
+authors = [
+  { name="Frank Harkins", email="frankharkins@hotmail.co.uk" },
+]
+description = "Write quantum programs directly in Python"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+ "qiskit",
+ "qiskit-aer"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/frankharkins/qupython"
+"Bug Tracker" = "https://github.com/frankharkins/qupython/issues"
