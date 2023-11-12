@@ -121,6 +121,7 @@ class Qubit:
                 )
                 for qubit in qubits + [self]:
                     qubit.operations.append(inst)
+                return self
 
             return add_gate
 
