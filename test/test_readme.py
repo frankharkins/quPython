@@ -90,46 +90,24 @@ class TestReadmeExamples(unittest.TestCase):
             )
 
         # === Begin code example ===
-        import math
-
-        @quantum
-        def qft(num_qubits: int):
-            qubits = [ Qubit() for _ in range(num_qubits) ]
-            def rotate(qubits):
-                """One iteration of the QFT rotations"""
-                qubits[0].h()
-                for index, control in enumerate(qubits[1:]):
-                    power = index + 1
-                    qubits[0].p(
-                        math.pi/2**power,
-                        conditions=[control]
-                    )
-
-            for index in range(len(qubits)):
-                rotate(qubits[index:])
-            return [q.measure() for q in qubits[::-1]]
-        # === End code example ===
-        result = qft(10)
-
-        # === Begin code example ===
         # Compile using quPython
-        random_bit.compile()
+        teleportation_demo.compile()
 
-        # Execute using Qiskit
-        qiskit_circuit = random_bit.circuit
+        # Draw compiled Qiskit circuit
+        teleportation_demo.circuit.draw()
         # === End code example ===
 
         self.assertIsInstance(
-            qiskit_circuit,
+            teleportation_demo.circuit,
             qiskit.QuantumCircuit
         )
 
         # === Begin code example ===
-        from qiskit.primitives import Sampler
-        qiskit_result = Sampler().run(qiskit_circuit).result()
-        function_output = random_bit.interpret_result(qiskit_result)
+        from qiskit_aer.primitives import Sampler
+        qiskit_result = Sampler().run(teleportation_demo.circuit).result()
+        teleportation_demo.interpret_result(qiskit_result)  # returns `False`
         # === End code example ===
 
-        self.assertTrue(
-            function_output == True or function_output == False
+        self.assertFalse(
+            teleportation_demo.interpret_result(qiskit_result)
         )
