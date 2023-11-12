@@ -69,6 +69,24 @@ def qft(num_qubits: int):
     return [q.measure() for q in qubits[::-1]]
 ```
 
+```python
+class BellPair:
+    def __init__(self):
+        self.left = Qubit().h()
+        self.right = Qubit().x(conditions=[self.left])
+
+@quantum
+def teleportation_demo():
+    message = Qubit()
+
+    bell_pair = BellPair()
+    do_x = bell_pair.left.x(conditions=[message]).measure()
+    do_z = message.h().measure()
+
+    bell_pair.right.x(conditions=[do_x]).z(conditions=[do_z])
+    return bell_pair.right.measure()
+```
+
 ### Generate Qiskit circuits
 
 If you want, you can just use quPython to create Qiskit circuits with Pythonic

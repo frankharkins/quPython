@@ -67,6 +67,29 @@ class TestReadmeExamples(unittest.TestCase):
             )
 
         # === Begin code example ===
+        class BellPair:
+            def __init__(self):
+                self.left = Qubit().h()
+                self.right = Qubit().x(conditions=[self.left])
+
+        @quantum
+        def teleportation_demo():
+            message = Qubit()
+
+            bell_pair = BellPair()
+            do_x = bell_pair.left.x(conditions=[message]).measure()
+            do_z = message.h().measure()
+
+            bell_pair.right.x(conditions=[do_x]).z(conditions=[do_z])
+            return bell_pair.right.measure()
+        # === End code example ===
+
+        for _ in range(15):
+            self.assertFalse(
+                teleportation_demo()
+            )
+
+        # === Begin code example ===
         import math
 
         @quantum
