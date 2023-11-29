@@ -111,3 +111,43 @@ class TestReadmeExamples(unittest.TestCase):
         self.assertFalse(
             teleportation_demo.interpret_result(qiskit_result)
         )
+
+
+        # === Begin code example ===
+        class QuIntPromise:
+            def __init__(self, bits):
+                self.bits = bits
+                self.value = None
+            def __int__(self):
+                return sum(1<<i for i, b in enumerate(self.bits) if b)
+            def __repr__(self):
+                return str(int(self))
+        # === End code example ===
+
+        # === Begin code example ===
+        class QuInt:
+            def __init__(self, value, n_bits):
+                self._qubits = [ Qubit() for _ in range(n_bits) ]
+                for i, qubit in enumerate(self._qubits):
+                    qubit.x(conditions=[(1<<i) & value])
+            def __iadd__(self, other):
+                for _ in range(other):
+                    for index, target in enumerate(reversed(self._qubits)):
+                        target.x(conditions=self._qubits[:-index-1])
+                return self
+            def measure(self):
+                return QuIntPromise([q.measure() for q in self._qubits])
+        # === End code example ===
+
+        # === Begin code example ===
+        @quantum
+        def test_int():
+            i = QuInt(value=5, n_bits=5)
+            i += 2
+            return i.measure()
+        # === End code example ===
+
+        self.assertEqual(
+            repr(test_int()),
+            "7"
+        )

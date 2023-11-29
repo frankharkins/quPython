@@ -67,6 +67,9 @@ class QubitPromise(_Bit):
             raise QubitPromiseNotResolvedError(ERR_MSG["QubitPromiseNotResolved"])
         return self.value
 
+    def __int__(self):
+        return int(bool(self))
+
     def __eq__(self, other):
         if self.value is None:
             return id(self) == id(other)

@@ -121,6 +121,57 @@ qiskit_result = Sampler().run(teleportation_demo.circuit).result()
 teleportation_demo.interpret_result(qiskit_result)  # returns `False`
 ```
 
+## Create quantum data types
+
+quPython only deals with single qubits (which measure to single bits), but you
+can easily extend this to complex data types. The following example creates a
+quantum `integer` type.
+
+First, create the promise type your measurements will return.
+
+```python
+class QuIntPromise:
+    def __init__(self, bits):
+        self.bits = bits
+        self.value = None
+    def __int__(self):
+        return sum(1<<i for i, b in enumerate(self.bits) if b)
+    def __repr__(self):
+        return str(int(self))
+```
+
+Next, create the quantum data type using `Qubit` objects, and incorporate a
+`measure` method that returns your promise. This example includes one extra
+method.
+
+```python
+class QuInt:
+    def __init__(self, value, n_bits):
+        self._qubits = [ Qubit() for _ in range(n_bits) ]
+        for i, qubit in enumerate(self._qubits):
+            qubit.x(conditions=[(1<<i) & value])
+    def __iadd__(self, other):
+        for _ in range(other):
+            for index, target in enumerate(reversed(self._qubits)):
+                target.x(conditions=self._qubits[:-index-1])
+        return self
+    def measure(self):
+        return QuIntPromise([q.measure() for q in self._qubits])
+```
+
+Then test it out.
+
+```python
+@quantum
+def test_int():
+    i = QuInt(value=5, n_bits=5)
+    i += 2
+    return i.measure()
+
+>>> test_int()
+7
+```
+
 ## How it works
 
 > For contributors (or the curious)
