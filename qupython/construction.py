@@ -59,7 +59,7 @@ def _waiting_for_bits(instruction):
     Check if instruction can be applied to circuit.
     """
     for bit in instruction.qubits+instruction.promises:
-        if bit.operations.index(instruction) != bit.op_pointer:
+        if bit.operations[bit.op_pointer] != instruction:
             return True
     return False
 
@@ -72,25 +72,18 @@ def _add_instructions_to_circuit(circuit, qubit):
     for op in qubit.operations[qubit.op_pointer :]:
         if _waiting_for_bits(op):
             return
-        if isinstance(op, quPythonMeasurement):
-            qubit.op_pointer += 1
-            for promise in op.promises:
-                circuit.measure(qubit.index, promise.index)
-                promise.op_pointer += 1
-            continue
-        if op.promises:
-            # TODO: neaten up
-            with contextlib.ExitStack() as stack:
-                for promise in op.promises:
-                    stack.enter_context(
-                        circuit.if_test((promise.index, int(not promise.inverse)))
-                    )
-                circuit.append(op.qiskit_instruction, [q.index for q in op.qubits])
-
-        else:
-            circuit.append(op.qiskit_instruction, [q.index for q in op.qubits])
         for bit in op.qubits+op.promises:
             bit.op_pointer += 1
+        if isinstance(op, quPythonMeasurement):
+            for promise in op.promises:
+                circuit.measure(qubit.index, promise.index)
+            continue
+        with contextlib.ExitStack() as stack:
+            for promise in op.promises:
+                stack.enter_context(
+                    circuit.if_test((promise.index, int(not promise.inverse)))
+                )
+            circuit.append(op.qiskit_instruction, [q.index for q in op.qubits])
 
 
 def _construct_circuit(promises):

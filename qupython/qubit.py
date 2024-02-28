@@ -8,21 +8,16 @@ class QubitPromiseNotResolvedError(Exception):
 class _Bit:
     operations: list
 
-    def get_linked_bits(self, already_found=set()):
+    def get_linked_bits(self, already_found=None):
         # TODO: unit test
-        # TODO: neaten up
-        linked_bits = already_found.copy() or set([self])
-        for op in self.operations:
-            linked_bits |= set(op.qubits)
-            linked_bits |= set(op.promises)
-
-        new_bits = linked_bits - already_found
-        while new_bits:
-            for bit in new_bits.copy():
-                new_bits |= bit.get_linked_bits(already_found=linked_bits)
-            new_bits = new_bits - linked_bits
-            linked_bits |= new_bits
-        return linked_bits
+        searched_bits = set()
+        all_known_bits = { self }
+        while len(searched_bits) < len(all_known_bits):
+            for bit in (all_known_bits - searched_bits):
+                for op in bit.operations:
+                    all_known_bits |= set(op.qubits + op.promises)
+            searched_bits.add(bit)
+        return all_known_bits
 
 
 class QubitPromise(_Bit):
@@ -125,8 +120,8 @@ class Qubit(_Bit):
     def _separate_conditions(self, conditions):
         qubits = [c for c in conditions if isinstance(c, Qubit)]
         promises = [c for c in conditions if isinstance(c, QubitPromise)]
-        rest = [c for c in conditions if not isinstance(c, (Qubit, QubitPromise))]
-        return qubits, promises, rest
+        build_time_conditions = [c for c in conditions if not isinstance(c, (Qubit, QubitPromise))]
+        return qubits, promises, build_time_conditions
 
     def _create_1q_gate_methods(self):
         """
@@ -139,8 +134,8 @@ class Qubit(_Bit):
         def _create_method(gate):
             def add_gate(*args, **kwargs):
                 conditions = kwargs.pop("conditions", [])
-                qubits, promises, rest = self._separate_conditions(conditions)
-                if not all(rest):
+                qubits, promises, build_time_conditions = self._separate_conditions(conditions)
+                if not all(build_time_conditions):
                     return
                 qiskit_inst = gate(*args, **kwargs)
                 if qubits:
