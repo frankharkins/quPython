@@ -1,0 +1,88 @@
+name: Release and publish to PyPI
+on:
+  workflow_dispatch:
+    inputs:
+      version_number:
+        type: string
+        required: true
+        description: >-
+          New version number to publish (do not prefix with "v")
+
+jobs:
+  build-release:
+    name: Build and release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install build dependencies
+        run: |
+          pip install build toml
+
+      - name: Update version in pyproject.toml
+        shell: python
+        run: |
+          import toml
+          with open("pyproject.toml", "r") as f:
+              pyproject = toml.load(f)
+          version_number = "${{ inputs.version_number }}"
+          assert len(version_number.split(".")) == 3
+          assert not version_number.startswith("v")
+          pyproject["project"]["version"] = version_number
+          with open("pyproject.toml", "w") as f:
+              toml.dump(pyproject, f)
+
+      - name: Run tests
+        run: python -m unittest
+
+      - name: Push tagged version
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email github-actions@github.com
+          git add pyproject.toml
+          git commit -m "Update version for v${{ inputs.version_number }} release"
+          git tag v${{ inputs.version_number }}
+          git push origin main --tags
+
+      - name: Build
+        run: |
+          python -m build
+
+      - name: Store distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Release to GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "v${{ inputs.version_number }}"
+          --generate-notes
+          --verify-tag
+
+  publish:
+    needs:
+      - build-release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/qupython
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distribution packages
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
