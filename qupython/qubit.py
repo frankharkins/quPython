@@ -16,7 +16,7 @@ class _Bit:
             for bit in (all_known_bits - searched_bits):
                 for op in bit.operations:
                     all_known_bits |= set(op.qubits + op.promises)
-            searched_bits.add(bit)
+                searched_bits.add(bit)
         return all_known_bits
 
 
