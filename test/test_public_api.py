@@ -54,6 +54,12 @@ class Compilation(unittest.TestCase):
             result = bool(my_fun())
             self.assertEqual(result, True)
 
+    def test_clbit_negation_return(self):
+        @quantum
+        def my_fun():
+            return ~Qubit().measure()
+        self.assertEqual(bool(my_fun()), True)
+
 class QuantumFunctionCallable(unittest.TestCase):
     def test_ordering(self):
         @quantum

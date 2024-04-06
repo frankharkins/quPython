@@ -60,6 +60,8 @@ class BitPromise(_Bit):
     def __bool__(self):
         if self.value is None:
             raise BitPromiseNotResolvedError(ERR_MSG["BitPromiseNotResolved"])
+        if self.inverse:
+            return not self.value
         return self.value
 
     def __int__(self):
@@ -68,7 +70,7 @@ class BitPromise(_Bit):
     def __eq__(self, other):
         if self.value is None:
             return id(self) == id(other)
-        return self.value == other
+        return bool(self) == other
 
     def __hash__(self):
         return id(self)
@@ -76,7 +78,7 @@ class BitPromise(_Bit):
     def __repr__(self):
         if self.value is None:
             return f"BitPromise({self.operations})"
-        return repr(self.value)
+        return repr(bool(self))
 
     def __invert__(self):
         # TODO: This is a bit inefficient as it adds a new measurement each
