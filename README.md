@@ -30,25 +30,55 @@ True
 
 ## Python-like data management
 
-Create classes for quantum data just as you would conventional data, and
-condition quantum gates on classical and quantum data in exactly the same way.
+Create classes for quantum data just as you would conventional data. The
+following example creates a simple logical qubit class. See the [Logical qubit
+example](./examples/logical-qubit.md) for a more complete class.
 
 ```python
-class BellPair:
+from qupython import Qubit, quantum
+from qupython.typing import BitPromise
+
+class LogicalQubit:
+    """
+    Simple logical qubit using the five-qubit code.
+    See https://en.wikipedia.org/wiki/Five-qubit_error_correcting_code
+    """
     def __init__(self):
-        self.left = Qubit().h()
-        self.right = Qubit().x(conditions=[self.left])
+        """
+        Create new logical qubit and initialize to logical |0>.
+        Uses initialization procedure from https://quantumcomputing.stackexchange.com/a/14449
+        """
+        self.qubits = [Qubit() for _ in range(5)]
+        self.qubits[4].z()
+        for q in self.qubits[:4]:
+            q.h()
+            self.qubits[4].x(conditions=[q])
+        for a, b in [(0,4),(0,1),(2,3),(1,2),(3,4)]:
+            control = self.qubits[b]
+            self.qubits[a].z(conditions=[control])
 
+    def measure(self) -> BitPromise:
+        """
+        Measure logical qubit to single classical bit
+        """
+        out = Qubit().h()
+        for q in self.qubits:
+            q.z(conditions=[out])
+        return out.h().measure()
+```
+
+This abstracts the bit-level operations away from the user.
+
+```python
 @quantum
-def teleportation_demo():
-    message = Qubit()
+def logical_qubit_demo() -> BitPromise:
+    q = LogicalQubit()
+    return q.measure()
+```
 
-    bell_pair = BellPair()
-    do_x = bell_pair.left.x(conditions=[message]).measure()
-    do_z = message.h().measure()
-
-    bell_pair.right.x(conditions=[do_x]).z(conditions=[do_z])
-    return bell_pair.right.measure()
+```python
+>>> logical_qubit_demo()
+False
 ```
 
 ## Generate Qiskit circuits
@@ -59,26 +89,28 @@ Qiskit).
 
 ```python
 # Compile using quPython
-teleportation_demo.compile()
+logical_qubit_demo.compile()
 
 # Draw compiled Qiskit circuit
-teleportation_demo.circuit.draw()
+logical_qubit_demo.circuit.draw()
 ```
 
 ```
-                    ┌───┐┌─┐                           
-q_0: ────────────■──┤ H ├┤M├───────────────────────────
-          ┌───┐  │  └───┘└╥┘┌──────────┐┌──────────┐┌─┐
-q_1: ─────┤ X ├──┼────────╫─┤0         ├┤0         ├┤M├
-     ┌───┐└─┬─┘┌─┴─┐ ┌─┐  ║ │          ││          │└╥┘
-q_2: ┤ H ├──■──┤ X ├─┤M├──╫─┤          ├┤          ├─╫─
-     └───┘     └───┘ └╥┘  ║ │  If_else ││          │ ║ 
-c_0: ═════════════════╬═══╬═╡          ╞╡  If_else ╞═╩═
-                      ║   ║ │          ││          │   
-c_1: ═════════════════╩═══╬═╡0         ╞╡          ╞═══
-                          ║ └──────────┘│          │   
-c_2: ═════════════════════╩═════════════╡0         ╞═══
-                                        └──────────┘   
+     ┌───┐                                                       
+q_0: ┤ H ├────────────■────────■───────────■─────■───────────────
+     ├───┤            │        │           │     │               
+q_1: ┤ H ├──■─────────┼────────┼──■──■──■──┼─────┼───────────────
+     ├───┤  │         │        │  │  │  │  │     │               
+q_2: ┤ H ├──┼────■────┼────────┼──┼──■──┼──■──■──┼───────────────
+     ├───┤┌─┴─┐┌─┴─┐┌─┴─┐┌───┐ │  │     │     │  │               
+q_3: ┤ Z ├┤ X ├┤ X ├┤ X ├┤ X ├─┼──■──■──┼─────┼──┼─────■─────────
+     ├───┤└───┘└───┘└───┘└─┬─┘ │     │  │     │  │     │ ┌───┐┌─┐
+q_4: ┤ H ├─────────────────┼───┼─────┼──■─────■──■──■──■─┤ H ├┤M├
+     ├───┤                 │   │     │              │    └───┘└╥┘
+q_5: ┤ H ├─────────────────■───■─────■──────────────■──────────╫─
+     └───┘                                                     ║ 
+c: 1/══════════════════════════════════════════════════════════╩═
+                                                               0 
 ```
 
 You can compile the function without executing it, optimize the cirucit,
@@ -86,6 +118,6 @@ execute it however you like, then use quPython to interpret the results.
 
 ```python
 from qiskit_aer.primitives import Sampler
-qiskit_result = Sampler().run(teleportation_demo.circuit).result()
-teleportation_demo.interpret_result(qiskit_result)  # returns `False`
+qiskit_result = Sampler().run(logical_qubit_demo.circuit).result()
+logical_qubit_demo.interpret_result(qiskit_result)  # returns `False`
 ```
