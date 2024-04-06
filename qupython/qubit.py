@@ -79,13 +79,15 @@ class QubitPromise(_Bit):
         return repr(self.value)
 
     def __invert__(self):
+        # TODO: This is a bit inefficient as it adds a new measurement each
+        # time we invert the promise
+        measurement_instruction = self.operations[0]
         new_promise = QubitPromise(
-            self.measurement_instruction,
+            measurement_instruction,
             inverse= not self.inverse
         )
-        self.measurement_instruction.append(new_promise)
+        measurement_instruction.promises.append(new_promise)
         return new_promise
-
 
 
 class quPythonInstruction:

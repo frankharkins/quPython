@@ -43,6 +43,17 @@ class Compilation(unittest.TestCase):
                     n + 3*(n//2)
             )
 
+    def test_clbit_negation(self):
+        @quantum
+        def my_fun():
+            q = Qubit().h()
+            m = q.measure()
+            q.x(conditions=[~m])
+            return q.measure()
+        for _ in range(20):
+            result = bool(my_fun())
+            self.assertEqual(result, True)
+
 class QuantumFunctionCallable(unittest.TestCase):
     def test_ordering(self):
         @quantum
