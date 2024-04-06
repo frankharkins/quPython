@@ -1,15 +1,15 @@
-# Functions for compiling quantum circuits from QubitPromise objects
+# Functions for compiling quantum circuits from BitPromise objects
 
 import contextlib
 import qiskit
 from collections.abc import Mapping, Iterable
-from .qubit import Qubit, QubitPromise, quPythonInstruction, quPythonMeasurement
+from .qubit import Qubit, BitPromise, quPythonInstruction, quPythonMeasurement
 from .err_msg import ERR_MSG
 
 
 def _get_promises(obj):
     """
-    Recursively search Python object for `QubitPromises`.
+    Recursively search Python object for `BitPromise` objects.
     """
     # TODO: unit test
     if obj is None:
@@ -20,7 +20,7 @@ def _get_promises(obj):
 
     if isinstance(obj, Qubit):
         raise ValueError(ERR_MSG["ReturnQubitFromQuantumFunction"])
-    if isinstance(obj, QubitPromise):
+    if isinstance(obj, BitPromise):
         return set([obj])
 
     if hasattr(obj, "__dict__"):
@@ -88,12 +88,12 @@ def _add_instructions_to_circuit(circuit, qubit):
 
 def _construct_circuit(promises):
     """
-    Compile quantum circuit needed to fulfil QubitPromise values.
+    Compile quantum circuit needed to fulfil BitPromise values.
     """
     # TODO: unit test
     bits = _get_bits_from_promises(promises)
     qubits = [b for b in bits if isinstance(b, Qubit)]
-    promises = [p for p in bits if isinstance(p, QubitPromise)]
+    promises = [p for p in bits if isinstance(p, BitPromise)]
     for index, qubit in enumerate(qubits):
         qubit.index = index  # Map qupython.Qubit to circuit qubit
         qubit.op_pointer = 0  # To keep track of compiled operations

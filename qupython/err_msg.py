@@ -4,12 +4,12 @@
 from textwrap import dedent
 
 ERR_MSG = {
-  "QubitPromiseNotResolved":
+  "BitPromiseNotResolved":
   """
-  You can't cast QubitPromise to a bool until it's resolved.
+  You can't cast BitPromise to a bool until it's resolved.
 
-  You're trying to cast a QubitPromise (the output of .measure()) to a bool,
-  but QubitPromises don't have a value until after the function completes.
+  You're trying to cast a BitPromise (the output of .measure()) to a bool, but
+  BitPromise objects don't have a value until after the function completes.
 
     @quantum
     def random_action():
@@ -28,7 +28,7 @@ ERR_MSG = {
     if random_bit():
         do_thing()
 
-  There is an exception to this: The quPython compiler recognises QubitPromise
+  There is an exception to this: The quPython compiler recognises BitPromise
   objects that condition qubit gates, so you can do the following.
 
     a, b = Qubit(), Qubit()
@@ -68,10 +68,10 @@ ERR_MSG = {
 
   "CantSearchObjectForPromises":
   """
-  Can't search through object {obj} for QubitPromises.
+  Can't search through object {obj} for BitPromise objects.
 
   When a @quantum function returns something, quPython intercepts it and
-  searches for any QubitPromise objects. It then compiles and executes the
+  searches for any BitPromise objects. It then compiles and executes the
   quantum program needed to fulfil these promises.
 
   For some reason, quPython can't search the object(s) you're returning.

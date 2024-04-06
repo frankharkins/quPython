@@ -2,7 +2,7 @@ import qiskit.circuit.library as clib
 from .err_msg import ERR_MSG
 
 
-class QubitPromiseNotResolvedError(Exception):
+class BitPromiseNotResolvedError(Exception):
     pass
 
 class _Bit:
@@ -20,7 +20,7 @@ class _Bit:
         return all_known_bits
 
 
-class QubitPromise(_Bit):
+class BitPromise(_Bit):
     """
     Placeholder for qubit measurement results.
 
@@ -28,16 +28,16 @@ class QubitPromise(_Bit):
     a `@quantum` function, quPython executes the circuit needed to fulfil any
     returned promises.
 
-    After the values are determined, a `QubitPromise` tries to behave as much
+    After the values are determined, a `BitPromise` tries to behave as much
     like a `bool` as possible. Unfortunately, there are some quirks because
-    `QubitPromises` need to have unique hashes before circuit compilation, but
-    `bool`s all have the same hash (0 or 1) and you can't change an object's
-    hash without breaking basic Python functionality. The following code
-    snippet shows an example.
+    `BitPromise` objects need to have unique hashes before circuit compilation,
+    but `bool`s all have the same hash (0 or 1) and you can't change an
+    object's hash without breaking basic Python functionality. The following
+    code snippet shows an example.
 
     ```
     # Create fulfilled qubit promise
-    promise = QubitPromise(None)
+    promise = BitPromise(None)
     promise.value = True
 
     # Show unexpected behavior
@@ -45,11 +45,11 @@ class QubitPromise(_Bit):
     promise in (True, False)  # False
     ```
 
-    Currently not sure what the best behavior is. Options are:
-      * Keep it like this, and encourage users to cast to `bool` ASAP
-      * Keep like this, but have quPython return a new copy of the data with
-        _actual_ `bool`s
-      * Something else?
+    For best results, cast to `bool` as soon as possible after the function
+    completes.
+
+    If you have better ideas on how to handle this, let me know at
+    https://github.com/frankharkins/qupython/issues/new
     """
 
     def __init__(self, measurement_instruction, inverse=False):
@@ -59,7 +59,7 @@ class QubitPromise(_Bit):
 
     def __bool__(self):
         if self.value is None:
-            raise QubitPromiseNotResolvedError(ERR_MSG["QubitPromiseNotResolved"])
+            raise BitPromiseNotResolvedError(ERR_MSG["BitPromiseNotResolved"])
         return self.value
 
     def __int__(self):
@@ -75,14 +75,14 @@ class QubitPromise(_Bit):
 
     def __repr__(self):
         if self.value is None:
-            return f"QubitPromise({self.operations})"
+            return f"BitPromise({self.operations})"
         return repr(self.value)
 
     def __invert__(self):
         # TODO: This is a bit inefficient as it adds a new measurement each
         # time we invert the promise
         measurement_instruction = self.operations[0]
-        new_promise = QubitPromise(
+        new_promise = BitPromise(
             measurement_instruction,
             inverse= not self.inverse
         )
@@ -102,7 +102,7 @@ class quPythonInstruction:
 
 class quPythonMeasurement:
     def __init__(self, qubit):
-        self.promises = [QubitPromise(self)]
+        self.promises = [BitPromise(self)]
         self.qubits = [qubit]
 
 
@@ -121,8 +121,8 @@ class Qubit(_Bit):
 
     def _separate_conditions(self, conditions):
         qubits = [c for c in conditions if isinstance(c, Qubit)]
-        promises = [c for c in conditions if isinstance(c, QubitPromise)]
-        build_time_conditions = [c for c in conditions if not isinstance(c, (Qubit, QubitPromise))]
+        promises = [c for c in conditions if isinstance(c, BitPromise)]
+        build_time_conditions = [c for c in conditions if not isinstance(c, (Qubit, BitPromise))]
         return qubits, promises, build_time_conditions
 
     def _create_1q_gate_methods(self):
@@ -174,7 +174,7 @@ class Qubit(_Bit):
 
     def measure(self):
         """
-        Add measure instruction to Qubit and return QubitPromise
+        Add measure instruction to Qubit and return BitPromise
         """
         inst = quPythonMeasurement(self)
         self.operations.append(inst)

@@ -2,7 +2,7 @@
 
 import qiskit
 from qiskit_aer.primitives import Sampler
-from .qubit import QubitPromise, quPythonInstruction, quPythonMeasurement
+from .qubit import quPythonInstruction, quPythonMeasurement
 from .construction import _get_promises, _construct_circuit
 from .err_msg import ERR_MSG
 
