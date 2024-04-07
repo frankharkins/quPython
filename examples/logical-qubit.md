@@ -38,10 +38,11 @@ class LogicalQubit:
         self.qubits[4].z()
         for q in self.qubits[:4]:
             q.h()
-            self.qubits[4].x(conditions=[q])
+            with q.as_control():
+                self.qubits[4].x()
         for a, b in [(0,4),(0,1),(2,3),(1,2),(3,4)]:
-            control = self.qubits[b]
-            self.qubits[a].z(conditions=[control])
+            with self.qubits[b].as_control():
+                self.qubits[a].z()
 
     def x(self) -> None:
         """
@@ -64,10 +65,11 @@ class LogicalQubit:
         """
         out = Qubit().h()
         for q in self.qubits:
-            q.z(conditions=[out])
+            with out.as_control():
+                q.z()
         return out.h().measure()
 
-    def _measure_stabilizers(self): -> list[BitPromise]:
+    def _measure_stabilizers(self) -> list[BitPromise]:
         """
         For use in `.correct()`; detects errors using syndrome measurements.
         """
@@ -77,8 +79,9 @@ class LogicalQubit:
             for index, gate in enumerate(string):
                 if gate == "i":
                     continue
-                gate_method = getattr(self.qubits[index], gate)
-                gate_method(conditions=[control])
+                with control.as_control():
+                    gate_method = getattr(self.qubits[index], gate)
+                    gate_method()
         return [control.h().measure() for control in aux_qubits]
 
     def correct(self) -> None:

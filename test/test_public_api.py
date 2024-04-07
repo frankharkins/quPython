@@ -8,7 +8,8 @@ class Compilation(unittest.TestCase):
             qubits = [ Qubit() for _ in range(n) ]
             qubits[0].h()
             for target in qubits[1:]:
-                target.x(conditions=[qubits[0]])
+                with qubits[0].as_control():
+                    target.x()
             return qubits[0].measure()
 
         for n in [1, 5, 20]:
@@ -19,9 +20,12 @@ class Compilation(unittest.TestCase):
 
     def test_another_simple_example(self):
         def swap(q0: Qubit, q1: Qubit):
-            q0.x(conditions=[q1])
-            q1.x(conditions=[q0])
-            q0.x(conditions=[q1])
+            with q1.as_control():
+                q0.x()
+            with q0.as_control():
+                q1.x()
+            with q1.as_control():
+                q0.x()
 
         class CustomClass:
             def __init__(self, qubits):
@@ -48,7 +52,8 @@ class Compilation(unittest.TestCase):
         def my_fun():
             q = Qubit().h()
             m = q.measure()
-            q.x(conditions=[~m])
+            with (~m).as_control():
+                q.x()
             return q.measure()
         for _ in range(20):
             result = bool(my_fun())

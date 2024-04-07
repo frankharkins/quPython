@@ -52,10 +52,11 @@ class LogicalQubit:
         self.qubits[4].z()
         for q in self.qubits[:4]:
             q.h()
-            self.qubits[4].x(conditions=[q])
+            with q.as_control():
+                self.qubits[4].x()
         for a, b in [(0,4),(0,1),(2,3),(1,2),(3,4)]:
-            control = self.qubits[b]
-            self.qubits[a].z(conditions=[control])
+            with self.qubits[b].as_control():
+                self.qubits[a].z()
 
     def measure(self) -> BitPromise:
         """
@@ -63,7 +64,8 @@ class LogicalQubit:
         """
         out = Qubit().h()
         for q in self.qubits:
-            q.z(conditions=[out])
+            with out.as_control():
+                q.z()
         return out.h().measure()
 ```
 

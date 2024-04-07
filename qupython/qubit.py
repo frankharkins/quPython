@@ -1,8 +1,14 @@
+from contextvars import ContextVar
+
 import qiskit.circuit.library as clib
 from .err_msg import ERR_MSG
 
+active_controls = ContextVar("qupython_active_controls", default=())
 
 class BitPromiseNotResolvedError(Exception):
+    pass
+
+class ConditionMeasurementAtRuntimeError(Exception):
     pass
 
 class _Bit:
@@ -18,6 +24,19 @@ class _Bit:
                     all_known_bits |= set(op.qubits + op.promises)
                 searched_bits.add(bit)
         return all_known_bits
+
+    def as_control(self):
+        return ControlBitContextManager(self)
+
+
+class ControlBitContextManager:
+    def __init__(self, control):
+        self.control = control
+    def __enter__(self):
+        existing_controls = active_controls.get()
+        self.reset_token = active_controls.set(existing_controls + (self.control,))
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        active_controls.reset(self.reset_token)
 
 
 class BitPromise(_Bit):
@@ -138,6 +157,7 @@ class Qubit(_Bit):
         def _create_method(gate):
             def add_gate(*args, **kwargs):
                 conditions = kwargs.pop("conditions", [])
+                conditions += active_controls.get()
                 qubits, promises, build_time_conditions = self._separate_conditions(conditions)
                 if not all(build_time_conditions):
                     return
@@ -174,10 +194,17 @@ class Qubit(_Bit):
         ]:
             setattr(self, name, _create_method(gate))
 
-    def measure(self):
+    def measure(self, conditions=None):
         """
         Add measure instruction to Qubit and return BitPromise
         """
+        conditions = conditions or []
+        conditions += active_controls.get()
+        qubits, promises, build_time_conditions = self._separate_conditions(conditions)
+        if qubits or promises:
+            raise ConditionMeasurementAtRuntimeError(ERR_MSG["ConditionMeasurementAtRuntimeError"])
+        if not all(build_time_conditions):
+            return
         inst = quPythonMeasurement(self)
         self.operations.append(inst)
         return inst.promises[0]

@@ -113,6 +113,24 @@ ERR_MSG = {
       your_function.compile( <function-args-here> )
 
   This will compile the function but not execute any circuits.
+  """,
+
+  "ConditionMeasurementAtRuntimeError":
+  """
+  You're trying to condition a Qubit measurement on either another Qubit, or on
+  the result of a Qubit measurement. Conditioning a measurement on a Qubit is
+  impossible, and quPython doesn't support conditioning measurements on Qubit
+  measurements yet. The problem occurs when you do something like this:
+
+    @quantum
+    def my_func():
+        a, b = Qubit(), Qubit()
+        with a.as_control():
+            b.x()
+            output = b.measure()  # problem
+        return output
+
+  To resolve this, move the measurement out of the `with` block.
   """
 }
 

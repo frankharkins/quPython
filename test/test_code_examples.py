@@ -12,7 +12,8 @@ class GHZState(unittest.TestCase):
             control, targets = qubits[0], qubits[1:]
             control.h()
             for target in targets:
-                target.x(conditions=[control])
+                with control.as_control():
+                    target.x()
             return [ qubit.measure() for qubit in qubits ]
 
         for _ in range(10):
@@ -36,7 +37,8 @@ class CustomDataTypes(unittest.TestCase):
             def __init__(self, value, n_bits):
                 self._qubits = [ Qubit() for _ in range(n_bits) ]
                 for i, qubit in enumerate(self._qubits):
-                    qubit.x(conditions=[(1<<i) & value])
+                    if (1<<i) & value:
+                        qubit.x()
             def __iadd__(self, other):
                 for _ in range(other):
                     for index, target in enumerate(reversed(self._qubits)):
