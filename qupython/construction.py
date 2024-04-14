@@ -3,7 +3,7 @@
 import contextlib
 import qiskit
 from collections.abc import Mapping, Iterable
-from .qubit import Qubit, BitPromise, quPythonInstruction, quPythonMeasurement
+from .qubit import Qubit, BitPromise, _quPythonMeasurement
 from .err_msg import ERR_MSG
 
 
@@ -50,7 +50,7 @@ def _get_bits_from_promises(promises):
     initial_bits=set(promises)
     all_bits = initial_bits.copy()
     for bit in initial_bits:
-        all_bits |= bit.get_linked_bits(already_found=all_bits)
+        all_bits |= bit._get_linked_bits(already_found=all_bits)
     return all_bits
 
 
@@ -74,14 +74,14 @@ def _add_instructions_to_circuit(circuit, qubit):
             return
         for bit in op.qubits+op.promises:
             bit.op_pointer += 1
-        if isinstance(op, quPythonMeasurement):
+        if isinstance(op, _quPythonMeasurement):
             for promise in op.promises:
                 circuit.measure(qubit.index, promise.index)
             continue
         with contextlib.ExitStack() as stack:
             for promise in op.promises:
                 stack.enter_context(
-                    circuit.if_test((promise.index, int(not promise.inverse)))
+                    circuit.if_test((promise.index, int(not promise._inverse)))
                 )
             circuit.append(op.qiskit_instruction, [q.index for q in op.qubits])
 

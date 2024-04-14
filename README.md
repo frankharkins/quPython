@@ -32,7 +32,8 @@ True
 
 Create classes for quantum data just as you would conventional data. The
 following example creates a simple logical qubit class. See the [Logical qubit
-example](./examples/logical-qubit.md) for a more complete class.
+example](https://github.com/frankharkins/quPython/blob/main/examples/logical-qubit.md)
+for a more complete class.
 
 ```python
 from qupython import Qubit, quantum

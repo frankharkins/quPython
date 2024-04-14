@@ -1,0 +1,37 @@
+# Adapted from https://github.com/mitmproxy/pdoc/blob/main/.github/workflows/docs.yml
+name: Deploy documentation
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install . pdoc
+      - run: pdoc qupython -o _build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _build/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
