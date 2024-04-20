@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install . pdoc
-      - run: pdoc qupython -o _build
+      - run: pdoc qupython -o _build -t docs/theme
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _build/

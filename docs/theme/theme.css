@@ -1,0 +1,206 @@
+@import url('https://fonts.googleapis.com/css2?family=Karla&family=Source+Code+Pro:wght@400;700&display=swap');
+
+/*
+ * Based on https://github.com/mitmproxy/pdoc/tree/main/examples/dark-mode.
+ * Modified from the original.
+ */
+
+:root {
+  color-scheme: only dark;
+
+  --color-black: #0d1117;
+  --color-white: #ecf2f8;
+  --color-grey: #8b949e; /* #57606a; */
+  --color-darkgrey: #21262d;
+  --color-cursor: #58a6ff;
+  --color-blue: #0969da;
+  --color-cyan: #56d4dd;
+  --color-red: #d2a8ff;
+  --color-purple: #ff7b72;
+
+  --pdoc-background: var(--color-black);
+}
+
+.pdoc {
+  --text: var(--color-grey);
+  --muted: var(--color-muted);
+  --link: var(--color-cyan);
+  --link-hover: var(--color-cyan);
+  --code: var(--color-black);
+  --active: var(--code);
+
+  --accent: var(--color-black);
+  --accent2: var(--color-darkgrey);
+
+  --nav-hover: var(--color-cyan);
+  --name: var(--color-red);
+  --def: var(--color-purple);
+  --annotation: var(--color-white);
+}
+
+/*
+ * This is all specific to quPython.
+ * Unfortunately most of the !importants are necessary to override pdoc rules.
+ */
+
+body {
+  font-family: 'Source Code Pro', Helvetica, Arial, sans-serif;
+}
+
+main.pdoc {
+  /* padding-top: 2rem !important; */
+  /* padding: 2rem 2rem 0 calc(var(--sidebar-width)); */
+  padding: 1rem 0 0 0;
+  margin: auto;
+  max-width: 45rem;
+}
+
+
+/* TODO: improve the navtoggle */
+#navtoggle {
+  position: fixed !important;
+  top: .4rem !important;
+  right: .4rem !important;
+  background: var(--color-black);
+  opacity: 1 !important;
+}
+
+p {
+  font-family: Karla;
+}
+
+.docstring {
+  margin-bottom: 0 !important;
+}
+
+h1, h2, h3, h4, h5 {
+  font-size: 1rem !important;
+  color: var(--color-white);
+}
+
+
+h1, h2, h3, h4 {
+  color: var(--color-white);
+}
+
+p+h2, p+h3, p+h4 {
+  margin-top: 4rem !important;
+}
+
+h1, h2 {
+  font-weight: bold !important;
+}
+
+h1 {
+  margin-bottom: 0 !important;
+}
+
+h1.modulename:not(:has(a)) {
+  font-size: 1.5rem !important;
+  margin-bottom: 2rem !important;
+}
+
+.module-info {
+  margin-top: 0 !important;
+}
+
+a:hover {
+  background: var(--color-cyan);
+  color: var(--color-black) !important;
+}
+
+input {
+  margin-bottom: 1rem;
+}
+
+.pdoc-code {
+  margin-left: 0 !important;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-darkgrey) !important;
+  padding: 1rem;
+}
+
+pre, code {
+  font-family: 'Source Code Pro' !important;
+  border: 1px solid var(--color-darkgrey);
+  border-radius: 0 !important;
+  margin-right: 1rem;
+}
+
+.pdoc-code > pre {
+  border: none !important;
+  margin: 0 !important;
+}
+
+section > .classattr {
+  border-left: 1px solid var(--color-darkgrey);
+}
+
+.signature {
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+nav {
+  box-shadow: none !important;
+  border: none !important;
+}
+
+nav li {
+  font-size: .85rem !important;
+}
+
+section {
+  margin-top: 4rem;
+}
+
+.pdoc-button, input {
+  border-radius: 0 !important;
+  border: 1px solid var(--color-darkgrey) !important;
+}
+
+input {
+  padding: .2em .4em;
+  background: var(--color-black);
+}
+
+input:focus {
+  outline: solid var(--color-cyan) 1px !important;
+}
+
+.class {
+  position: sticky !important;
+  z-index: 1000;
+  top: 0;
+}
+
+
+@media only screen and (max-width: 1500px) {
+  main.pdoc{
+    margin-left: calc(var(--sidebar-width) + 1rem);
+  }
+}
+
+
+@media only screen and (max-width: 1050px) {
+  main.pdoc{
+    /* max-width: 32rem; */
+    max-width: calc(100vw - var(--sidebar-width) - 2rem);
+    /* margin-left: calc(var(--sidebar-width) + 1.5rem); */
+  }
+}
+
+@media only screen and (max-width: 770px) {
+  main.pdoc{
+    margin: 2rem;
+  }
+
+  p {
+    padding-left: 1rem !important;
+  }
+  .pdoc-code, pre, table, details, h1, h2, h3, h4, h5 {
+    margin-left: 1rem !important;
+  }
+}

@@ -4,6 +4,10 @@
 
 ## API documentation
 
+The rest of the page is the API documentation for the two main quPython
+imports: `Qubit` and `quantum`. You can also import `BitPromise` objects for
+type annotations from `qupython.typing`.
+
 """
 __docformat__ = "restructuredtext"
 from .qubit import Qubit

@@ -51,8 +51,6 @@ class Qubit(Bit):
     This is the main quPython object you'll interact with and the only object
     you should instantiate directly. Qubits start in state |0〉.
 
-    ### Gates
-
     `Qubit` objects support the following single-qubit gate operations as
     methods.
 
@@ -103,8 +101,6 @@ class Qubit(Bit):
     ```python
     qubit.x(conditions=[another_qubit, measurement_result, True])
     ```
-
-    ### Measurement
 
     Use the `measure` method to return a `BitPromise`. These promises can
     control quantum gates too using the `as_control` method.
@@ -232,7 +228,7 @@ class BitPromise(Bit):
     completes or use the `value` attribute.
 
     If you have better ideas on how to handle this, let me know in an
-    [issue](https://github.com/frankharkins/qupython/issues/new).
+    [issue](https://github.com/frankharkins/qupython/issues/new?title=[Suggestion]:%20BitPromise%20values).
     </details>
     """
 
