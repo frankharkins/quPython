@@ -5,3 +5,4 @@
 build/
 dist/
 qupython.egg-info/
+_build/

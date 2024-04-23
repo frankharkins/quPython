@@ -16,7 +16,7 @@ def quantum(func) -> quPythonFunction:
         left, right Qubit(), Qubit()
         with left.as_control():
             right.x()
-        return left, right
+        return left.measure(), right.measure()
 
     my_function()  # Returns either (True, True) or (False, False)
     ```

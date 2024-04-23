@@ -90,7 +90,7 @@ class Qubit(Bit):
 
     ```python
     qubit, another_qubit = Qubit(), Qubit()
-    qubit.as_control():
+    with qubit.as_control():
         another_qubit.x()
     ```
 
