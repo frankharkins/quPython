@@ -75,6 +75,7 @@ class TestReadmeExamples(unittest.TestCase):
                 """
                 Measure logical qubit to single classical bit
                 """
+                # Note the `out` qubit is scoped to this function
                 out = Qubit().h()
                 for q in self.qubits:
                     with out.as_control():

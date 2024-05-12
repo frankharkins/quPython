@@ -4,11 +4,13 @@
 pip install qupython
 ```
 
-quPython compiles Python functions into quantum programs, executes the
-programs, and returns the results as `bool`-like objects.
+Most quantum computing SDKs involve bit-level operations, assembly-like syntax,
+and no higher-level data structures. quPython makes quantum programs look more
+like Python code through two main main design decisions:
+1. Quantum programs are (decorated) Python functions, no separate circuit objects.
+2. Quantum operations are methods on the `Qubit` class.
 
-Initialize a `quPython.Qubit` object just like any other object and use it
-inside a `@quantum` function. These are the only two imports you'll need.
+Here's an example:
 
 ```python
 from qupython import Qubit, quantum
@@ -20,20 +22,26 @@ def random_bit():
     return qubit.measure()  # Measure qubit to bool
 ```
 
-When you run `random_bit`, quPython compiles your function to a quantum
-program, executes it, and returns results.
+The `@quantum` decorator converts the function into a quantum function that can
+be executed on a quantum computer. When you run `random_bit`, quPython compiles
+your function to a quantum program, executes it, and returns results.
 
 ```python
 >>> random_bit()
 True
 ```
 
-## Python-like data management
+## Use Python to organise your quantum programs
 
-Create classes for quantum data just as you would conventional data. The
-following example creates a simple logical qubit class. See the [Logical qubit
-example](https://github.com/frankharkins/quPython/blob/main/examples/logical-qubit.md)
-for a more complete class.
+Qubits feel like standard Python objects, which makes it easier to organise
+quantum programs using classes and other Python features. The following example
+creates a simple logical qubit class. This shows some nice consequences of
+quPython's design decisions:
+
+* The lower level qubits and operation are handled by the class
+* Qubits and classical bits can be initialized in methods and scoped to those methods
+* Methods return classical bit objects to be used in the program or returned to
+  the user; no need to keep track of bit indices or registers.
 
 ```python
 from qupython import Qubit, quantum
@@ -63,6 +71,7 @@ class LogicalQubit:
         """
         Measure logical qubit to single classical bit
         """
+        # Note the `out` qubit is scoped to this function
         out = Qubit().h()
         for q in self.qubits:
             with out.as_control():
@@ -70,7 +79,7 @@ class LogicalQubit:
         return out.h().measure()
 ```
 
-This abstracts the bit-level operations away from the user.
+Here's how you'd use this class.
 
 ```python
 @quantum
@@ -83,6 +92,10 @@ def logical_qubit_demo() -> BitPromise:
 >>> logical_qubit_demo()
 False
 ```
+
+See the [Logical qubit
+example](https://github.com/frankharkins/quPython/blob/main/examples/logical-qubit.md)
+for a more complete class.
 
 ## Generate Qiskit circuits
 
@@ -116,7 +129,7 @@ c: 1/═════════════════════════
                                                                0 
 ```
 
-You can compile the function without executing it, optimize the cirucit,
+You can compile the function without executing it, optimize the circuit,
 execute it however you like, then use quPython to interpret the results.
 
 ```python

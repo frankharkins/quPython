@@ -11,8 +11,8 @@ a single qubit. This code also demonstrates a few other quPython features:
 * The measurement methods return classical bit objects to be used in the
   program or returned to the user; no need to keep track of bit indices or
   registers.
-* The `conditions` operations on a `Qubit` accept both `Qubit` and `BitPromise`
-  objects.
+* The `conditions` argument on a `Qubit` method accept both `Qubit` and
+  `BitPromise` objects.
 
 > [!NOTE]
 > Beware that initializing `LogicalQubit` objects and calling `.correct()` are
