@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install . git+https://github.com/frankharkins/pdoc.git@cb7a7d7594e821922e2f92cd7ef158f152f9cc31
+      - run: pip install . pdoc>=14.5
 
       - run: pdoc ./qupython -o _build -t docs/theme
       - uses: actions/upload-pages-artifact@v3
