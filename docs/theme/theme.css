@@ -65,8 +65,12 @@ main.pdoc {
   opacity: 1 !important;
 }
 
-p {
+p, li, .attribution {
   font-family: Karla;
+}
+
+p, ol, ul {
+  margin-bottom: .5rem;
 }
 
 .docstring {
@@ -83,7 +87,7 @@ h1, h2, h3, h4 {
   color: var(--color-white);
 }
 
-p+h2, p+h3, p+h4 {
+main h2, main h3, main h4 {
   margin-top: 4rem !important;
 }
 
@@ -95,13 +99,13 @@ h1 {
   margin-bottom: 0 !important;
 }
 
-h1.modulename:not(:has(a)) {
+h1.modulename {
   font-size: 1.5rem !important;
   margin-bottom: 2rem !important;
 }
 
 .module-info {
-  margin-top: 0 !important;
+  margin-top: var(--pad) !important;
 }
 
 a:hover {
@@ -109,20 +113,28 @@ a:hover {
   color: var(--color-black) !important;
 }
 
+nav li:hover:has(li) {
+  background: var(--color-black) !important;
+  color: var(--color-black) !important;
+}
+
 input {
   margin-bottom: 1rem;
 }
 
-.pdoc-code {
+.pdoc-code, details {
   margin-left: 0 !important;
   margin-top: 1rem;
   margin-bottom: 1rem;
   border: 1px solid var(--color-darkgrey) !important;
-  padding: 1rem;
+  padding: 0.2rem;
 }
 
 pre, code {
-  font-family: 'Source Code Pro' !important;
+  font-family: 'Source Code Pro', monospace !important;
+}
+
+pre, code, details {
   border: 1px solid var(--color-darkgrey);
   border-radius: 0 !important;
   margin-right: 1rem;
@@ -153,6 +165,10 @@ nav li {
 }
 
 section {
+  margin-top: 4rem;
+}
+
+.module-info+section {
   margin-top: 4rem;
 }
 
