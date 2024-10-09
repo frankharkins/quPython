@@ -1,16 +1,10 @@
 # quPython
 
-```
-pip install qupython
-```
+> Quantum programs that read like Python
 
-Most quantum computing SDKs involve bit-level operations, assembly-like syntax,
-and no higher-level data structures. quPython makes quantum programs look more
-like Python code through two main main design decisions:
-1. Quantum programs are (decorated) Python functions, no separate circuit objects.
-2. Quantum operations are methods on the `Qubit` class.
-
-Here's an example:
+Stop writing code that looks like assembly! quPython makes quantum programs as
+easy as regular Python code. To illustrate, here's "Hello, world!" in quPython
+(make sure to `pip install qupython` first):
 
 ```python
 from qupython import Qubit, quantum
@@ -20,20 +14,23 @@ def random_bit():
     qubit = Qubit()         # Allocate new qubit
     qubit.h()               # Mutate qubit
     return qubit.measure()  # Measure qubit to bool
+
+print(random_bit())         # Prints "True" or "False"
 ```
 
 The `@quantum` decorator converts the function into a quantum function that can
 be executed on a quantum computer. When you run `random_bit`, quPython compiles
-your function to a quantum program, executes it, and returns results.
-
-```python
->>> random_bit()
-True
-```
+your function to a quantum program, executes it, and returns the results. Read
+on to see why this is a big deal.
 
 ## Use Python to organise your quantum programs
 
-Qubits feel like standard Python objects, which makes it easier to organise
+quPython just a wrapper for Qiskit, but it makes two different design decisions:
+1. Quantum programs are (decorated) Python functions, no separate circuit objects.
+2. Quantum operations are methods on the `Qubit` class.
+
+These small changes make a big difference in how you write your programs.
+Qubits feel like standard Python objects, which makes it natural to organise
 quantum programs using classes and other Python features. The following example
 creates a simple logical qubit class. This shows some nice consequences of
 quPython's design decisions:
